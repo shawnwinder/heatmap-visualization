@@ -1,0 +1,94 @@
+name: "Bi-Attention"
+
+finetune: True
+
+# workspace for initialization
+root_dir: "/home/zhibin/wangxiao/workshop/visual-tasks/heatmap-visualization"
+
+# which gpu to use
+# gpu_id: 0
+# gpu_id: 1
+# gpu_id: 2
+gpu_id: 3
+
+model_arch:
+  # the total number of classes
+  num_classes: 200
+  # where to hold the predict net
+  r: 16  # SENet compression rate
+  feature_dim: 2048
+  attention_dim: 1024 # attention dimension, which means the bottom input dimension too
+  compact_dim: 4096  # compact feature dimention
+  last_conv_size: 7  # hard coded number for last conv layer of Resnet50 output width & height
+
+network:
+  # the weights of the model
+  # init_net: "/home/zhibin/qzhong/caffe2/caffe2_model_zoo/resnet50/resnet50_init_net.pb"
+  init_net: "/home/zhibin/wangxiao/workshop/visual-tasks/Bi-Attention-PC/experiments/FINETUNE-Bi-Attention-190409-221337/snapshot/bat-pc-birds200_finetune-bi-attention_epoch-100_init_net.pb"
+  init_net_type: "pb"
+
+training_data:
+  # the data source
+  # data_path: "/home/zhibin/wangxiao/datasets/caffe2_lmdb/stanford_cars_encoded_train_lmdb/"
+  data_path: "/mnt/disk1/zhibin/experiment_data/caffe2_lmdb/caltech_ucsd_200_2011_birds_encoded_train_lmdb"
+  # the data format
+  data_format: "lmdb"
+  # the transformation for input data
+  input_transform:
+    use_gpu_transform: true
+    use_caffe_datum: false
+    scale: 256
+    batch_size: 4 # means image-label pair number
+    mean_per_channel: [128., 128., 128.]
+    std_per_channel: [128., 128., 128.]
+    crop_size: 224
+
+evaluate_data: 
+  # the data source 
+  # data_path: "/home/zhibin/wangxiao/datasets/caffe2_lmdb/stanford_cars_encoded_val_lmdb"
+  data_path: "/mnt/disk1/zhibin/experiment_data/caffe2_lmdb/caltech_ucsd_200_2011_birds_encoded_val_lmdb"
+  # the data format
+  data_format: "lmdb"
+  # the transformation for input data
+  input_transform:
+    use_gpu_transform: true
+    use_caffe_datum: false
+    scale: 256
+    batch_size: 4   # means 32
+    mean_per_channel: [128., 128., 128.]
+    std_per_channel: [128., 128., 128.]
+    crop_size: 224
+
+# total num: 16185
+# training num: 8144
+# validation num: 8041
+# training-related parameters
+solver:
+  # training from scratch or not
+  pretrained: true
+  base_learning_rate: 0.08
+  weight_decay: 0.0001
+  pc_weight: 0.001
+  # momentum sgd 
+  nesterov: 1
+  momentum: 0.9
+  # the learning rate policy, including step, fixed, exp, multistep, poly
+  lr_policy: "poly" 
+  power: 1.
+  max_iter: 80000
+
+  # when train the model with `snapshot` iterations, save the model
+  snapshot: 508  # every 2 epoches
+  # the file type for saved models, including pb and pickle
+  snapshot_type: "pb"
+
+  # the total iteration number for training
+  max_iterations: 25400  # about 100 epoches, 8144/32 iterations/epoch
+  # how many iterations per training epoch
+  train_iterations: 254
+  # when to display the result for the model
+  display: 5
+  # when to run the validation model
+  test_interval: 254
+  # when run the validation on validation data(8041 imgs), run `test_iterations` iterations on validation model
+  test_iterations: 251
